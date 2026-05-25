@@ -43,7 +43,7 @@ export default function PermissionsScreen() {
 
         // Verificar BLUETOOTH_SCAN
         try {
-          const scanStatus = await Permissions.getAsync('BLUETOOTH_SCAN');
+          const scanStatus = await Permissions.getAsync('BLUETOOTH_SCAN' as any);
           permissionsList.push({
             name: 'BLUETOOTH_SCAN',
             status: scanStatus.status as any,
@@ -55,7 +55,7 @@ export default function PermissionsScreen() {
 
         // Verificar BLUETOOTH_CONNECT
         try {
-          const connectStatus = await Permissions.getAsync('BLUETOOTH_CONNECT');
+          const connectStatus = await Permissions.getAsync('BLUETOOTH_CONNECT' as any);
           permissionsList.push({
             name: 'BLUETOOTH_CONNECT',
             status: connectStatus.status as any,
@@ -67,7 +67,7 @@ export default function PermissionsScreen() {
 
         // Verificar ACCESS_FINE_LOCATION
         try {
-          const locationStatus = await Permissions.getAsync('ACCESS_FINE_LOCATION');
+          const locationStatus = await Permissions.getAsync('ACCESS_FINE_LOCATION' as any);
           permissionsList.push({
             name: 'ACCESS_FINE_LOCATION',
             status: locationStatus.status as any,
@@ -113,21 +113,21 @@ export default function PermissionsScreen() {
         const results: any = {};
 
         try {
-          const scanResult = await Permissions.askAsync('BLUETOOTH_SCAN');
+          const scanResult = await Permissions.askAsync('BLUETOOTH_SCAN' as any);
           results['BLUETOOTH_SCAN'] = scanResult;
         } catch (e) {
           console.warn('Error solicitando BLUETOOTH_SCAN:', e);
         }
 
         try {
-          const connectResult = await Permissions.askAsync('BLUETOOTH_CONNECT');
+          const connectResult = await Permissions.askAsync('BLUETOOTH_CONNECT' as any);
           results['BLUETOOTH_CONNECT'] = connectResult;
         } catch (e) {
           console.warn('Error solicitando BLUETOOTH_CONNECT:', e);
         }
 
         try {
-          const locationResult = await Permissions.askAsync('ACCESS_FINE_LOCATION');
+          const locationResult = await Permissions.askAsync('ACCESS_FINE_LOCATION' as any);
           results['ACCESS_FINE_LOCATION'] = locationResult;
         } catch (e) {
           console.warn('Error solicitando ACCESS_FINE_LOCATION:', e);
