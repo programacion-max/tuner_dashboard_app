@@ -40,6 +40,9 @@
 - [x] Mejorar manejo de errores en Bluetooth Service
 - [x] Agregar validaciones en escaneo y conexión
 - [x] Corregir errores de compilación TypeScript
+- [x] Eliminar expo-permissions (deprecado)
+- [x] Reemplazar con PermissionsAndroid nativo de React Native
+- [x] Verificar compilación sin errores
 
 ## Fase 6: Personalización de Dashboards (Futuro)
 - [ ] Crear pantalla de Editor de Dashboards

@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Permissions from 'expo-permissions';
-import * as Location from 'expo-location';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 
-const REQUIRED_PERMISSIONS = [
-  'BLUETOOTH',
-  'BLUETOOTH_SCAN',
-  'BLUETOOTH_CONNECT',
-  'ACCESS_FINE_LOCATION',
-];
-
 interface PermissionStatus {
   name: string;
-  status: 'granted' | 'denied' | 'pending' | 'undetermined';
+  status: string;
   description: string;
 }
 
 export default function PermissionsScreen() {
   const router = useRouter();
   const colors = useColors();
+
   const [permissions, setPermissions] = useState<PermissionStatus[]>([]);
   const [allGranted, setAllGranted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,10 +43,12 @@ export default function PermissionsScreen() {
 
         // Verificar BLUETOOTH_SCAN
         try {
-          const scanStatus = await Permissions.getAsync('BLUETOOTH_SCAN' as any);
+          const scanStatus = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN
+          );
           permissionsList.push({
             name: 'BLUETOOTH_SCAN',
-            status: scanStatus.status as any,
+            status: scanStatus ? 'granted' : 'denied',
             description: 'Escanear dispositivos Bluetooth',
           });
         } catch (e) {
@@ -55,10 +57,12 @@ export default function PermissionsScreen() {
 
         // Verificar BLUETOOTH_CONNECT
         try {
-          const connectStatus = await Permissions.getAsync('BLUETOOTH_CONNECT' as any);
+          const connectStatus = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+          );
           permissionsList.push({
             name: 'BLUETOOTH_CONNECT',
-            status: connectStatus.status as any,
+            status: connectStatus ? 'granted' : 'denied',
             description: 'Conectar a dispositivos Bluetooth',
           });
         } catch (e) {
@@ -67,10 +71,12 @@ export default function PermissionsScreen() {
 
         // Verificar ACCESS_FINE_LOCATION
         try {
-          const locationStatus = await Permissions.getAsync('ACCESS_FINE_LOCATION' as any);
+          const locationStatus = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+          );
           permissionsList.push({
             name: 'ACCESS_FINE_LOCATION',
-            status: locationStatus.status as any,
+            status: locationStatus ? 'granted' : 'denied',
             description: 'Ubicación precisa (requerida para Bluetooth)',
           });
         } catch (e) {
@@ -84,184 +90,162 @@ export default function PermissionsScreen() {
           (p) => p.status === 'granted'
         );
         setAllGranted(allGrantedStatus);
-
-        if (allGrantedStatus) {
-          // Navegar al dashboard después de 500ms
-          setTimeout(() => {
-            router.replace('/(tabs)');
-          }, 500);
-        }
       } else {
         // En iOS, los permisos se solicitan automáticamente
-        router.replace('/(tabs)');
+        setAllGranted(true);
       }
     } catch (err) {
       console.error('Error checking permissions:', err);
-      setError('Error al verificar permisos. Por favor, reinicia la app.');
+      setError('Error al verificar permisos');
     } finally {
       setLoading(false);
     }
   };
 
   const requestPermissions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      if (Platform.OS === 'android') {
-        // Solicitar permisos de Bluetooth
-        const results: any = {};
+    if (Platform.OS === 'android') {
+      try {
+        const permissionsToRequest = [
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ];
 
-        try {
-          const scanResult = await Permissions.askAsync('BLUETOOTH_SCAN' as any);
-          results['BLUETOOTH_SCAN'] = scanResult;
-        } catch (e) {
-          console.warn('Error solicitando BLUETOOTH_SCAN:', e);
-        }
-
-        try {
-          const connectResult = await Permissions.askAsync('BLUETOOTH_CONNECT' as any);
-          results['BLUETOOTH_CONNECT'] = connectResult;
-        } catch (e) {
-          console.warn('Error solicitando BLUETOOTH_CONNECT:', e);
-        }
-
-        try {
-          const locationResult = await Permissions.askAsync('ACCESS_FINE_LOCATION' as any);
-          results['ACCESS_FINE_LOCATION'] = locationResult;
-        } catch (e) {
-          console.warn('Error solicitando ACCESS_FINE_LOCATION:', e);
-        }
+        const results = await PermissionsAndroid.requestMultiple(
+          permissionsToRequest
+        );
 
         // Verificar resultados
-        await checkPermissions();
+        const allGrantedStatus = Object.values(results).every(
+          (status) => status === PermissionsAndroid.RESULTS.GRANTED
+        );
+
+        if (allGrantedStatus) {
+          setAllGranted(true);
+          // Navegar al dashboard después de 500ms
+          setTimeout(() => {
+            router.replace('/(tabs)');
+          }, 500);
+        } else {
+          setError('Se requieren todos los permisos para continuar');
+          await checkPermissions();
+        }
+      } catch (err) {
+        console.error('Error requesting permissions:', err);
+        setError('Error al solicitar permisos');
       }
-    } catch (err) {
-      console.error('Error requesting permissions:', err);
-      setError('Error al solicitar permisos. Por favor, intenta de nuevo.');
-    } finally {
-      setLoading(false);
+    } else {
+      // En iOS, asumir que está permitido
+      setAllGranted(true);
+      router.replace('/(tabs)');
     }
+
+    setLoading(false);
   };
 
-  const openSettings = async () => {
-    try {
-      // Abrir configuración de la app
-      if (Platform.OS === 'android') {
-        // En Android, abrir configuración de la app
-        const { openSettings } = require('expo-intent-launcher');
-        openSettings();
-      }
-    } catch (err) {
-      console.error('Error opening settings:', err);
-    }
+  const handleSkip = () => {
+    // Permitir continuar sin permisos (mostrará error en Bluetooth)
+    router.replace('/(tabs)');
   };
 
   return (
-    <ScreenContainer className="p-6">
+    <ScreenContainer className="p-4">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="gap-6">
-        {/* Header */}
-        <View className="gap-2 mt-4">
-          <Text className="text-3xl font-bold text-foreground">OBD1 Dashboard</Text>
-          <Text className="text-sm text-muted">
-            Permisos necesarios para conectar con tu vehículo
+        {/* Encabezado */}
+        <View className="gap-2 mt-8">
+          <Text className="text-3xl font-bold text-foreground">
+            Permisos Requeridos
+          </Text>
+          <Text className="text-base text-muted">
+            La app necesita acceso a Bluetooth para conectarse a tu ECU
           </Text>
         </View>
 
-        {/* Error Message */}
-        {error && (
-          <View className="bg-error/10 border border-error rounded-lg p-4">
-            <Text className="text-error text-sm font-semibold">{error}</Text>
+        {/* Loading */}
+        {loading && (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text className="mt-4 text-muted">Verificando permisos...</Text>
           </View>
         )}
 
-        {/* Permissions List */}
-        {permissions.length > 0 ? (
-          <View className="bg-surface rounded-lg p-4 gap-3">
-            <Text className="text-sm font-semibold text-foreground mb-2">
-              Estado de Permisos
-            </Text>
+        {/* Error */}
+        {error && !loading && (
+          <View className="bg-error/20 border border-error rounded-lg p-4">
+            <Text className="text-error font-semibold">{error}</Text>
+          </View>
+        )}
+
+        {/* Permisos List */}
+        {!loading && permissions.length > 0 && (
+          <View className="gap-3">
             {permissions.map((perm) => (
               <View
                 key={perm.name}
-                className="flex-row items-center justify-between p-3 bg-background rounded"
+                className="flex-row items-center gap-3 bg-surface rounded-lg p-4 border border-border"
               >
-                <View className="flex-1">
-                  <Text className="text-xs font-semibold text-foreground">
-                    {perm.description}
-                  </Text>
-                  <Text className="text-xs text-muted mt-1">{perm.name}</Text>
-                </View>
                 <View
-                  className={`w-8 h-8 rounded-full items-center justify-center ${
-                    perm.status === 'granted' ? 'bg-success' : 'bg-error'
+                  className={`w-6 h-6 rounded-full items-center justify-center ${
+                    perm.status === 'granted'
+                      ? 'bg-success'
+                      : 'bg-warning'
                   }`}
                 >
-                  <Text className="text-white font-bold">
-                    {perm.status === 'granted' ? '✓' : '✕'}
+                  <Text className="text-white text-xs font-bold">
+                    {perm.status === 'granted' ? '✓' : '!'}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-semibold text-foreground">
+                    {perm.name}
+                  </Text>
+                  <Text className="text-sm text-muted">
+                    {perm.description}
                   </Text>
                 </View>
               </View>
             ))}
           </View>
-        ) : null}
+        )}
 
-        {/* Info Box */}
-        <View className="bg-primary/10 border border-primary rounded-lg p-4">
-          <Text className="text-xs text-foreground leading-relaxed">
-            <Text className="font-semibold">Por qué necesitamos estos permisos:</Text>
-            {'\n\n'}
-            • <Text className="font-semibold">Bluetooth:</Text> Para conectar con el módulo HC-05
-            {'\n'}
-            • <Text className="font-semibold">Ubicación:</Text> Requerida por Android 11+ para escanear Bluetooth
-          </Text>
-        </View>
+        {/* Botones */}
+        {!loading && (
+          <View className="gap-3 mt-auto mb-8">
+            {!allGranted ? (
+              <>
+                <TouchableOpacity
+                  onPress={requestPermissions}
+                  className="bg-primary rounded-lg p-4 items-center active:opacity-80"
+                >
+                  <Text className="text-background font-bold text-lg">
+                    Solicitar Permisos
+                  </Text>
+                </TouchableOpacity>
 
-        {/* Buttons */}
-        <View className="gap-3 mt-auto">
-          {!allGranted ? (
-            <>
-              <TouchableOpacity
-                onPress={requestPermissions}
-                disabled={loading}
-                className={`rounded-lg p-4 items-center ${
-                  loading ? 'bg-primary/50' : 'bg-primary'
-                }`}
-              >
-                <Text className="text-background font-semibold">
-                  {loading ? 'Solicitando...' : 'Solicitar Permisos'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={openSettings}
-                className="rounded-lg p-4 items-center border border-primary"
-              >
-                <Text className="text-primary font-semibold">
-                  Abrir Configuración
-                </Text>
-              </TouchableOpacity>
-
+                <TouchableOpacity
+                  onPress={handleSkip}
+                  className="border border-border rounded-lg p-4 items-center active:opacity-80"
+                >
+                  <Text className="text-foreground font-semibold">
+                    Continuar sin permisos
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
               <TouchableOpacity
                 onPress={() => router.replace('/(tabs)')}
-                className="rounded-lg p-4 items-center"
+                className="bg-success rounded-lg p-4 items-center active:opacity-80"
               >
-                <Text className="text-muted font-semibold">
-                  Continuar sin permisos (limitado)
+                <Text className="text-background font-bold text-lg">
+                  Continuar al Dashboard
                 </Text>
               </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity
-              onPress={() => router.replace('/(tabs)')}
-              className="rounded-lg p-4 items-center bg-success"
-            >
-              <Text className="text-background font-semibold">
-                Continuar al Dashboard
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </ScreenContainer>
   );
