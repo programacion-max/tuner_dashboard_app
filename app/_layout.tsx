@@ -9,6 +9,7 @@ import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { OBD1Provider } from "@/lib/obd1-context";
+import { DashboardProvider } from "@/lib/dashboard-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -80,8 +81,9 @@ export default function RootLayout() {
   }, [initialInsets, initialFrame]);
 
   const content = (
-    <OBD1Provider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+    <DashboardProvider>
+      <OBD1Provider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
           {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
@@ -98,7 +100,8 @@ export default function RootLayout() {
           </QueryClientProvider>
         </trpc.Provider>
       </GestureHandlerRootView>
-    </OBD1Provider>
+      </OBD1Provider>
+    </DashboardProvider>
   );
 
   const shouldOverrideSafeArea = Platform.OS === "web";

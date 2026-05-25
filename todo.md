@@ -44,13 +44,33 @@
 - [x] Reemplazar con PermissionsAndroid nativo de React Native
 - [x] Verificar compilación sin errores
 
-## Fase 6: Personalización de Dashboards (Futuro)
-- [ ] Crear pantalla de Editor de Dashboards
-- [ ] Implementar drag & drop para widgets
-- [ ] Crear galería de widgets disponibles
-- [ ] Implementar configuración de colores por widget
-- [ ] Implementar configuración de rangos por widget
-- [ ] Crear sistema de guardado/carga de configuraciones (AsyncStorage)
+## Fase 6: Rediseño TunerView - Dashboards Mejorados
+- [x] Mejorar Racing Dashboard: gauge RPM más grande, mejor layout
+- [x] Mejorar Street Dashboard: distribución de widgets
+- [x] Mejorar Tuning Dashboard: gráficas en tiempo real
+- [x] Crear Dashboard Custom (en blanco)
+- [x] Añadir navegación entre dashboards
+
+## Fase 7: Editor de Dashboards con Drag & Drop
+- [x] Crear pantalla de Editor de Dashboards
+- [x] Implementar grid y drag & drop
+- [x] Crear biblioteca de widgets reutilizables
+- [x] Guardar/cargar configuraciones en AsyncStorage
+- [x] Exportar/importar layouts JSON
+
+## Fase 8: Gráficas y Mejoras Visuales
+- [x] Agregar componente de gráfica en tiempo real
+- [x] Sistema de historial de datos (60 segundos)
+- [x] Colores dinámicos (verde/amarillo/rojo) por umbral
+- [ ] Mejorar animaciones en gauges
+- [ ] Soporte landscape
+- [ ] Responsive para tablets
+
+## Fase 9: Finalización y Compilación
+- [ ] Integrar gráficas en dashboard Tuning
+- [ ] Pruebas finales
+- [ ] Generar APK compilable
+- [ ] Documentación de uso
 - [ ] Implementar eliminación de dashboards personalizados
 
 ## Fase 6: Funcionalidades Avanzadas
