@@ -195,42 +195,69 @@ class BluetoothService {
 
   // Escanear dispositivos Bluetooth
   async scanDevices(duration: number = 5000): Promise<BluetoothDevice[]> {
-    return new Promise((resolve) => {
-      const devices: Map<string, BluetoothDevice> = new Map();
-      this.isScanning = true;
+    return new Promise((resolve, reject) => {
+      try {
+        const devices: Map<string, BluetoothDevice> = new Map();
+        this.isScanning = true;
 
-      this.manager.startDeviceScan(null, null, (error, device) => {
-        if (error) {
+        this.manager.startDeviceScan(null, null, (error, device) => {
+          if (error) {
+            console.error('Scan error:', error);
+            this.isScanning = false;
+            try {
+              this.manager.stopDeviceScan();
+            } catch (e) {
+              console.warn('Error stopping scan:', e);
+            }
+            reject(new Error(`Bluetooth scan failed: ${error.message}`));
+            return;
+          }
+
+          if (device && device.name) {
+            devices.set(device.id, {
+              id: device.id,
+              name: device.name,
+              rssi: device.rssi ?? undefined,
+            });
+          }
+        });
+
+        setTimeout(() => {
+          try {
+            this.manager.stopDeviceScan();
+          } catch (e) {
+            console.warn('Error stopping scan:', e);
+          }
           this.isScanning = false;
           resolve(Array.from(devices.values()));
-          return;
-        }
-
-        if (device && device.name) {
-          devices.set(device.id, {
-            id: device.id,
-            name: device.name,
-            rssi: device.rssi ?? undefined,
-          });
-        }
-      });
-
-      setTimeout(() => {
-        this.manager.stopDeviceScan();
+        }, duration);
+      } catch (error) {
         this.isScanning = false;
-        resolve(Array.from(devices.values()));
-      }, duration);
+        reject(error);
+      }
     });
   }
 
   // Conectar a dispositivo
   async connect(deviceId: string): Promise<boolean> {
     try {
+      if (!deviceId) {
+        throw new Error('Device ID is required');
+      }
+
       this.device = await this.manager.connectToDevice(deviceId);
+      if (!this.device) {
+        throw new Error('Failed to connect to device');
+      }
+
       await this.device.discoverAllServicesAndCharacteristics();
 
       // Buscar característica de escritura/lectura (SPP)
       const services = await this.device.services();
+      if (!services || services.length === 0) {
+        throw new Error('No services found on device');
+      }
+
       for (const service of services) {
         const characteristics = await service.characteristics();
         for (const char of characteristics) {
@@ -244,7 +271,7 @@ class BluetoothService {
       }
 
       if (!this.characteristic) {
-        throw new Error('No suitable characteristic found');
+        throw new Error('No suitable characteristic found for read/write');
       }
 
       // Enviar secuencia de inicialización
@@ -252,6 +279,8 @@ class BluetoothService {
       return true;
     } catch (error) {
       console.error('Connection error:', error);
+      this.device = null;
+      this.characteristic = null;
       return false;
     }
   }

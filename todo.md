@@ -34,7 +34,14 @@
 - [x] Implementar navegación entre dashboards (tabs o swipe)
 - [x] Implementar contexto de datos OBD1 global
 
-## Fase 5: Personalización de Dashboards
+## Fase 5: Correcciones Android 11
+- [x] Agregar permisos BLUETOOTH_SCAN, BLUETOOTH_CONNECT, BLUETOOTH_ADVERTISE, ACCESS_FINE_LOCATION
+- [x] Crear pantalla de solicitud de permisos
+- [x] Mejorar manejo de errores en Bluetooth Service
+- [x] Agregar validaciones en escaneo y conexión
+- [x] Corregir errores de compilación TypeScript
+
+## Fase 6: Personalización de Dashboards (Futuro)
 - [ ] Crear pantalla de Editor de Dashboards
 - [ ] Implementar drag & drop para widgets
 - [ ] Crear galería de widgets disponibles

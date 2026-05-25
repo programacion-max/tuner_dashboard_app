@@ -32,10 +32,16 @@ export default function BluetoothConnectScreen() {
     setIsScanning(true);
     try {
       const foundDevices = await bluetoothService.scanDevices(5000);
-      setDevices(foundDevices);
+      if (!foundDevices || foundDevices.length === 0) {
+        setError('No se encontraron dispositivos Bluetooth');
+      } else {
+        setDevices(foundDevices);
+        setError(null);
+      }
     } catch (error) {
       console.error('Scan error:', error);
-      setError('Error al escanear dispositivos');
+      const errorMsg = error instanceof Error ? error.message : 'Error al escanear dispositivos';
+      setError(errorMsg);
     } finally {
       setIsScanning(false);
     }
@@ -44,6 +50,7 @@ export default function BluetoothConnectScreen() {
   const handleConnect = async (device: BluetoothDevice) => {
     setIsConnecting(true);
     setSelectedDevice(device);
+    setError(null);
 
     try {
       const connected = await bluetoothService.connect(device.id);
@@ -92,7 +99,8 @@ export default function BluetoothConnectScreen() {
       }
     } catch (error) {
       console.error('Connection error:', error);
-      setError('Error de conexión');
+      const errorMsg = error instanceof Error ? error.message : 'Error de conexión';
+      setError(errorMsg);
       setSelectedDevice(null);
     } finally {
       setIsConnecting(false);
