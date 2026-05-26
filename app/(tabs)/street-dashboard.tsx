@@ -109,7 +109,7 @@ export default function StreetDashboardScreen() {
           </View>
           <View className="flex-1">
             <BigNumber
-              value={data.alternatorLoad}
+              value={0}
               label="Alternador"
               unit="%"
               decimals={1}
@@ -149,7 +149,7 @@ export default function StreetDashboardScreen() {
           <View className="flex-row gap-3">
             <View className="flex-1">
               <BigNumber
-                value={data.stft}
+                value={0}
                 label="STFT"
                 unit="%"
                 decimals={1}
@@ -157,7 +157,7 @@ export default function StreetDashboardScreen() {
             </View>
             <View className="flex-1">
               <BigNumber
-                value={data.ltft}
+                value={0}
                 label="LTFT"
                 unit="%"
                 decimals={1}

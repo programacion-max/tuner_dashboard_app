@@ -27,12 +27,12 @@ export default function TuningDashboardScreen() {
       { label: 'O2', value: data.o2.toFixed(2), unit: 'V' },
       { label: 'Batería', value: data.batteryVoltage.toFixed(2), unit: 'V' },
       { label: 'Inyección', value: data.injectionTime.toFixed(2), unit: 'ms' },
-      { label: 'Ignición', value: data.ignition.toFixed(1), unit: '°' },
+      { label: 'Ignición', value: data.ignitionAdvance.toFixed(1), unit: '°' },
       { label: 'Duty Cycle', value: data.dutyCycle.toFixed(1), unit: '%' },
-      { label: 'STFT', value: data.stft.toFixed(1), unit: '%' },
-      { label: 'LTFT', value: data.ltft.toFixed(1), unit: '%' },
-      { label: 'IACV', value: data.iacv.toFixed(1), unit: '%' },
-      { label: 'Alternador', value: data.alternatorLoad.toFixed(1), unit: '%' },
+      { label: 'STFT', value: (0).toFixed(1), unit: '%' },
+      { label: 'LTFT', value: (0).toFixed(1), unit: '%' },
+      { label: 'IACV', value: (0).toFixed(1), unit: '%' },
+      { label: 'Alternador', value: (0).toFixed(1), unit: '%' },
     ];
   }, [data]);
 

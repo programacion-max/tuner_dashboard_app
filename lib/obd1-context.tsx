@@ -1,9 +1,20 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
 export interface OBD1Data {
-  // Bloque 1 (0x00-0x0F)
+  // Stream continuo QD3
   rpm: number;
-  vss: number;
+  vss: number; // velocidad km/h
+  ect: number; // Temperatura motor °C
+  iat: number; // Temperatura aire °C
+  map: number; // Presión múltiple kPa
+  tps: number; // Posición acelerador %
+  o2: number; // Sensor O2 V
+  batteryVoltage: number; // V
+  injectionTime: number; // ms
+  ignitionAdvance: number; // grados
+  dutyCycle: number; // %
+
+  // Flags
   flags: {
     vtec: boolean;
     checkEngine: boolean;
@@ -11,28 +22,6 @@ export interface OBD1Data {
     closedLoop: boolean;
   };
 
-  // Bloque 2 (0x10-0x1F)
-  ect: number; // Temperatura motor °C
-  iat: number; // Temperatura aire °C
-  map: number; // Presión múltiple kPa
-  baro: number; // Presión atmosférica kPa
-  tps: number; // Posición acelerador %
-  o2: number; // Sensor O2 V
-  o2_2: number; // Sensor O2 2 V
-  injectionTime: number; // ms
-  ignition: number; // grados
-  ignitionLimit: number; // grados
-  iacv: number; // Válvula ralentí %
-  batteryVoltage: number; // V
-  alternatorLoad: number; // %
-
-  // Bloque 3 (0x20-0x2F)
-  stft: number; // Short Term Fuel Trim %
-  ltft: number; // Long Term Fuel Trim %
-  timingAdvance: number; // grados
-
-  // Datos calculados
-  dutyCycle: number; // %
   timestamp: number; // ms desde epoch
 }
 
@@ -52,24 +41,16 @@ export interface OBD1ContextType {
 const defaultData: OBD1Data = {
   rpm: 0,
   vss: 0,
-  flags: { vtec: false, checkEngine: false, acClutch: false, closedLoop: false },
   ect: 0,
   iat: 0,
   map: 0,
-  baro: 0,
   tps: 0,
   o2: 0,
-  o2_2: 0,
-  injectionTime: 0,
-  ignition: 0,
-  ignitionLimit: 0,
-  iacv: 0,
   batteryVoltage: 0,
-  alternatorLoad: 0,
-  stft: 0,
-  ltft: 0,
-  timingAdvance: 0,
+  injectionTime: 0,
+  ignitionAdvance: 0,
   dutyCycle: 0,
+  flags: { vtec: false, checkEngine: false, acClutch: false, closedLoop: false },
   timestamp: Date.now(),
 };
 
@@ -82,16 +63,70 @@ export function OBD1Provider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const historyRef = useRef<OBD1Data[]>([]);
 
+  // Configurar callbacks del Bluetooth Service
+  useEffect(() => {
+    try {
+      const { bluetoothService } = require('./bluetooth-service');
+
+      // Callback cuando llega un frame del parser
+      bluetoothService.onFrameReceived = (frame: any) => {
+        const newData: Partial<OBD1Data> = {
+          rpm: frame.rpm || 0,
+          vss: frame.vss || 0,
+          ect: frame.ect || 0,
+          iat: frame.iat || 0,
+          map: frame.map || 0,
+          tps: frame.tps || 0,
+          o2: frame.o2 || 0,
+          batteryVoltage: frame.batteryVoltage || 0,
+          injectionTime: frame.injectionTime || 0,
+          ignitionAdvance: frame.ignitionAdvance || 0,
+          dutyCycle: frame.dutyCycle || 0,
+          flags: {
+            vtec: frame.vtec || false,
+            checkEngine: frame.checkEngine || false,
+            acClutch: frame.acClutch || false,
+            closedLoop: frame.closedLoop || false,
+          },
+        };
+        updateData(newData);
+        setReading(true);
+      };
+
+      // Callback de cambio de conexión
+      bluetoothService.onConnectionChange = (connected: boolean) => {
+        setConnected(connected);
+        if (!connected) {
+          setReading(false);
+        }
+      };
+
+      // Callback de errores
+      bluetoothService.onError = (errorMsg: string) => {
+        setError(errorMsg);
+      };
+
+      return () => {
+        // Cleanup
+        bluetoothService.onFrameReceived = () => {};
+        bluetoothService.onConnectionChange = () => {};
+        bluetoothService.onError = () => {};
+      };
+    } catch (err) {
+      console.warn('Failed to setup Bluetooth callbacks:', err);
+    }
+  }, []);
+
   const updateData = useCallback((newData: Partial<OBD1Data>) => {
     setData((prev) => {
       const updated = { ...prev, ...newData, timestamp: Date.now() };
-      
+
       // Guardar en historial (máximo 3000 puntos = 150 segundos a 20Hz)
       historyRef.current.push(updated);
       if (historyRef.current.length > 3000) {
         historyRef.current.shift();
       }
-      
+
       return updated;
     });
   }, []);

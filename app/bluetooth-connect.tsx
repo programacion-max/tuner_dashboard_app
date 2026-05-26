@@ -59,39 +59,9 @@ export default function BluetoothConnectScreen() {
         setConnected(true);
         setError(null);
 
-        // Iniciar lectura continua
         setReading(true);
-        bluetoothService.startContinuousRead((data) => {
-          updateData({
-            rpm: data.rpm,
-            vss: data.vss,
-            ect: data.ect,
-            iat: data.iat,
-            map: data.map,
-            baro: data.baro,
-            tps: data.tps,
-            o2: data.o2,
-            o2_2: data.o2_2,
-            injectionTime: data.injectionTime,
-            ignition: data.ignition,
-            ignitionLimit: data.ignitionLimit,
-            iacv: data.iacv,
-            batteryVoltage: data.batteryVoltage,
-            alternatorLoad: data.alternatorLoad,
-            stft: data.stft,
-            ltft: data.ltft,
-            timingAdvance: data.timingAdvance,
-            dutyCycle: data.dutyCycle,
-            flags: {
-              vtec: data.vtec,
-              checkEngine: data.checkEngine,
-              acClutch: data.acClutch,
-              closedLoop: data.closedLoop,
-            },
-          });
-        }, 50);
-
-        // Navegar al dashboard
+        // La lectura continua se inicia automáticamente en connect()
+        // y los datos se reciben a través del contexto OBD1
         router.replace('/(tabs)');
       } else {
         setError('No se pudo conectar al dispositivo');

@@ -126,7 +126,7 @@ export default function RacingDashboardScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1 bg-surface rounded-lg p-4">
             <BigNumber
-              value={data.ignition}
+              value={data.ignitionAdvance}
               label="Ignición"
               unit="°"
               decimals={1}
