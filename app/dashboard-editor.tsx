@@ -173,28 +173,23 @@ export default function DashboardEditor() {
               borderColor: dashboard.theme.gridColor,
             }}
           >
-            {/* Grid background */}
-            <View
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                backgroundImage: `repeating-linear-gradient(
-                  0deg,
-                  transparent,
-                  transparent ${gridSize - 1}px,
-                  ${dashboard.theme.gridColor}20 ${gridSize - 1}px,
-                  ${dashboard.theme.gridColor}20 ${gridSize}px
-                ),
-                repeating-linear-gradient(
-                  90deg,
-                  transparent,
-                  transparent ${gridSize - 1}px,
-                  ${dashboard.theme.gridColor}20 ${gridSize - 1}px,
-                  ${dashboard.theme.gridColor}20 ${gridSize}px
-                )`,
-              }}
-            />
+            {/* Grid lines - simple pattern */}
+            {Array.from({ length: Math.ceil(300 / gridSize) }).map((_, row) =>
+              Array.from({ length: Math.ceil(300 / gridSize) }).map((_, col) => (
+                <View
+                  key={`grid-${row}-${col}`}
+                  style={{
+                    position: 'absolute',
+                    left: col * gridSize,
+                    top: row * gridSize,
+                    width: 1,
+                    height: 1,
+                    backgroundColor: dashboard.theme.gridColor,
+                    opacity: 0.2,
+                  }}
+                />
+              ))
+            )}
 
             {/* Widgets */}
             {dashboard.widgets.map((widget) => (
