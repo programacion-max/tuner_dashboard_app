@@ -1,4 +1,14 @@
 import { BleManager, Device, Characteristic } from 'react-native-ble-plx';
+import { Platform } from 'react-native';
+
+// Polyfill para Buffer en React Native
+if (typeof global.Buffer === 'undefined') {
+  try {
+    global.Buffer = require('buffer').Buffer;
+  } catch (e) {
+    console.warn('Buffer polyfill failed:', e);
+  }
+}
 
 export interface BluetoothDevice {
   id: string;
@@ -51,14 +61,36 @@ export interface QD3Data {
 }
 
 class BluetoothService {
-  private manager: BleManager;
+  private manager: BleManager | null = null;
   private device: Device | null = null;
   private characteristic: any | null = null;
   private isScanning = false;
   private readInterval: any = null;
 
   constructor() {
-    this.manager = new BleManager();
+    // Lazy initialization - solo en Android/iOS, no en web
+    if (Platform.OS !== 'web') {
+      try {
+        this.manager = new BleManager();
+      } catch (error) {
+        console.warn('BleManager initialization failed:', error);
+        this.manager = null;
+      }
+    }
+  }
+
+  private getManager(): BleManager {
+    if (!this.manager) {
+      if (Platform.OS === 'web') {
+        throw new Error('Bluetooth is not supported on web');
+      }
+      try {
+        this.manager = new BleManager();
+      } catch (error) {
+        throw new Error(`Failed to initialize BleManager: ${error}`);
+      }
+    }
+    return this.manager;
   }
 
   // Convertir array de números a Buffer
@@ -197,15 +229,16 @@ class BluetoothService {
   async scanDevices(duration: number = 5000): Promise<BluetoothDevice[]> {
     return new Promise((resolve, reject) => {
       try {
+        const manager = this.getManager();
         const devices: Map<string, BluetoothDevice> = new Map();
         this.isScanning = true;
 
-        this.manager.startDeviceScan(null, null, (error, device) => {
+        manager.startDeviceScan(null, null, (error, device) => {
           if (error) {
             console.error('Scan error:', error);
             this.isScanning = false;
             try {
-              this.manager.stopDeviceScan();
+              manager.stopDeviceScan();
             } catch (e) {
               console.warn('Error stopping scan:', e);
             }
@@ -224,7 +257,7 @@ class BluetoothService {
 
         setTimeout(() => {
           try {
-            this.manager.stopDeviceScan();
+            manager.stopDeviceScan();
           } catch (e) {
             console.warn('Error stopping scan:', e);
           }
@@ -245,7 +278,8 @@ class BluetoothService {
         throw new Error('Device ID is required');
       }
 
-      this.device = await this.manager.connectToDevice(deviceId);
+      const manager = this.getManager();
+      this.device = await manager.connectToDevice(deviceId);
       if (!this.device) {
         throw new Error('Failed to connect to device');
       }
